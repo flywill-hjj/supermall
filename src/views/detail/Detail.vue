@@ -1,15 +1,17 @@
 <template>
 <div id="detail">
-  <detail-nav-bar class="detail-nav" />
-  <scroll class="content" ref="scroll">
+  <detail-nav-bar class="detail-nav" @titleClick="titleClick" ref="nav" />
+  <scroll class="content" ref="scroll" @scroll="contentScroll" :probe-type="3">
     <detail-swiper :top-images="topImages" />
     <detail-base-info :goods="goods" />
     <detail-shop-info :shop="shop" />
     <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad" />
-    <detail-param-info :paramInfo="paramInfo" />
-    <detail-comment-info :comment-info="commentInfo" />
-    <goods-list :goods="recommends" />
+    <detail-param-info ref="params" :paramInfo="paramInfo" />
+    <detail-comment-info ref="comment" :comment-info="commentInfo" />
+    <goods-list ref="recommend" :goods="recommends" />
   </scroll>
+  <detail-bottom-bar @addToCart="addToCart" />
+  <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
 </div>
 </template>
 
@@ -21,9 +23,15 @@ import DetailShopInfo from './childComps/DetailShopInfo'
 import DetailGoodsInfo from './childComps/DetailGoodsInfo'
 import DetailParamInfo from './childComps/DetailParamInfo'
 import DetailCommentInfo from './childComps/DetailCommentInfo'
+import DetailBottomBar from './childComps/DetailBottomBar'
 
 import Scroll from 'components/common/scroll/Scroll'
 import GoodsList from 'components/content/goods/GoodsList'
+// import BackTop from 'components/content/backTop/BackTop'
+
+import {
+  mapActions
+} from 'vuex'
 
 import {
   getDetail,
@@ -36,7 +44,8 @@ import {
   debounce
 } from 'common/utils'
 import {
-  itemListenerMixin
+  itemListenerMixin,
+  backTopMixin
 } from 'common/mixin'
 
 export default {
@@ -49,10 +58,12 @@ export default {
     DetailGoodsInfo,
     DetailParamInfo,
     DetailCommentInfo,
+    DetailBottomBar,
     Scroll,
-    GoodsList
+    GoodsList,
+    // BackTop
   },
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   data() {
     return {
       iid: null,
@@ -63,12 +74,83 @@ export default {
       paramInfo: {},
       commentInfo: {},
       recommends: [],
+      themeTopYs: [],
+      currentIndex: 0,
+      // isShowBackTop: false
       // itemImgListener: null
     }
   },
   methods: {
+    ...mapActions(['addCart']),
     imageLoad() {
-      this.$refs.scroll.refresh()
+      this.$refs.scroll.refresh();
+
+      this.themeTopYs = [];
+      this.themeTopYs.push(0);
+      this.themeTopYs.push(this.$refs.params.$el.offsetTop);
+      this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
+      this.themeTopYs.push(this.$refs.recommend.$el.offsetTop);
+      this.themeTopYs.push(Number.MAX_VALUE)
+      console.log(this.themeTopYs);
+    },
+    titleClick(index) {
+      // console.log(index);
+      this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 200)
+    },
+    contentScroll(position) {
+      //1.获取y值
+      const positionY = -position.y
+
+      //2.positionY和主题中的值进行对比
+      //  [0, 11498, 12469, 12664]
+      // console.log(Number.MAX_VALUE);
+
+      //positionY在0和themTopYs[1]之间 index=0
+      //positionY在themTopYs[1]和themTopYs[2]之间 index=1
+      //positionY在themTopYs[2]和themTopYs[3]之间 index=2
+      //positionY超过themTopYs[e] index=3
+      let length = this.themeTopYs.length;
+      for (let i = 0; i < length - 1; i++) {
+        // if (positionY > this.themeTopYs[i] && positionY < this.themeTopYs[i + 1]) {
+        //   console.log(i);
+        // }
+
+        if (this.currentIndex !== i && (positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i + 1])) {
+          this.currentIndex = i;
+          this.$refs.nav.currentIndex = this.currentIndex
+        }
+
+        // if (this.currentIndex != i && ((i < length - 1 && positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i + 1]) || (i == length - 1 && positionY >= this.themeTopYs[i]))) {
+        //   this.currentIndex = i;
+        //   console.log(this.currentIndex);
+        //   this.$refs.nav.currentIndex = this.currentIndex
+        // }
+      }
+      //是否显示回到顶部
+      this.listenShowBackTop(position)
+    },
+    addToCart() {
+      // console.log('-----');
+      //1.获取购物车需要展示的信息
+      const product = {}
+      product.image = this.topImages[0];
+      product.title = this.goods.title;
+      product.desc = this.goods.desc;
+      product.price = this.goods.realPrice;
+      product.iid = this.iid;
+
+      //2.将商品添加到购物车里面(1.Promise 2.mapAction)
+      // this.$store.cartList.push(product)
+      this.addCart(product).then(res => {
+        // this.show = true;
+        // this.message = res;
+
+        // setTimeout(() => {
+        //   this.show = false;
+        //   this.message = '';
+        // }, 1500)
+        this.$toast.show(res)
+      })
     }
   },
   created() {
@@ -100,19 +182,13 @@ export default {
       this.recommends = res.data.list
     })
   },
-  mounted() {
-    // const refresh = debounce(this.$refs.scroll.refresh, 50)
-    // this.itemImgListener = () => {
-    //   refresh()
-    // }
-    // this.$bus.$on('itemImgLoad', this.itemImgListener)
-  },
   destroyed() {
     // console.log('destroyed');
+
     this.$bus.$off('itemImgLoad', this.itemImgListener)
   },
 }
-</script>
+</script> 
 
 <style scoped>
 #detail {
@@ -129,6 +205,7 @@ export default {
 }
 
 .content {
-  height: calc(100% - 44px);
+  height: calc(100% - 44px - 58px);
+  overflow: hidden;
 }
 </style>

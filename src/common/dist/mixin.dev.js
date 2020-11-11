@@ -3,9 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.itemListenerMixin = void 0;
+exports.backTopMixin = exports.itemListenerMixin = void 0;
 
 var _utils = require("common/utils");
+
+var _BackTop = _interopRequireDefault(require("components/content/backTop/BackTop"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var itemListenerMixin = {
   data: function data() {
@@ -21,7 +25,25 @@ var itemListenerMixin = {
     };
 
     this.$bus.$on('itemImageLoad', this.itemImgListener);
-    console.log('我是混入中的内容');
   }
 };
 exports.itemListenerMixin = itemListenerMixin;
+var backTopMixin = {
+  components: {
+    BackTop: _BackTop["default"]
+  },
+  data: function data() {
+    return {
+      isShowBackTop: false
+    };
+  },
+  methods: {
+    backClick: function backClick() {
+      this.$refs.scroll.scrollTo(0, 0, 700);
+    },
+    listenShowBackTop: function listenShowBackTop(position) {
+      this.isShowBackTop = -position.y > 1000;
+    }
+  }
+};
+exports.backTopMixin = backTopMixin;

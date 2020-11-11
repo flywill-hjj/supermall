@@ -1,7 +1,7 @@
 <template>
 <div id="home">
   <nav-bar class="home-nav">
-    <div slot="center">购物车</div>
+    <div slot="center">购物街</div>
   </nav-bar>
   <tab-control :titles="['流行', '新款', '精选']" @tabClick="tabClick" ref="tabControl1" class="tab-control" v-show="isTabFixed" />
   <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll" :pull-up-load="true" @pullingUp="loadMore">
@@ -26,7 +26,7 @@ import NavBar from 'components/common/navbar/NavBar';
 import TabControl from 'components/content/tabControl/TabControl';
 import GoodList from 'components/content/goods/GoodsList'
 import Scroll from 'components/common/scroll/Scroll'
-import BackTop from 'components/content/backTop/BackTop'
+// import BackTop from 'components/content/backTop/BackTop'
 
 import {
   getHomeMultidata,
@@ -36,7 +36,8 @@ import {
   debounce
 } from 'common/utils';
 import {
-  itemListenerMixin
+  itemListenerMixin,
+  backTopMixin
 } from 'common/mixin';
 
 export default {
@@ -49,7 +50,7 @@ export default {
     TabControl,
     GoodList,
     Scroll,
-    BackTop
+    // BackTop
   },
   data() {
     return {
@@ -74,10 +75,10 @@ export default {
       taboffsetTop: 0,
       isTabFixed: false,
       saveY: 0,
-      itemImgListener: null
+      // itemImgListener: null
     }
   },
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   computed: {
     showGoods() {
       return this.goods[this.currentType].list
@@ -148,7 +149,7 @@ export default {
     },
     contentScroll(position) {
       //1.判断我们的BackTop是否显示
-      this.isShowBackTop = -position.y > 1000
+      this.listenShowBackTop(position)
 
       //2.决定tabControl是否吸顶（position：fixed）
       this.isTabFixed = (-position.y) > this.taboffsetTop

@@ -203,4 +203,109 @@ sell: page1/list[30]
 * 进来时, 将位置设置为原来保存的位置saveY信息即可.
   * 注意: 最好回来时, 进行一次refresh()
 
+### 十一.推荐数据的展示
+* 请求推荐数据
+* GoodsList展示数据
 
+### 十二.mixin的使用
+* 创建混入对象:const mixin = {}
+* 组件对象中：mixins[mixin]
+
+### 十四.标题和内容的联动效果
+
+#### 14.1. 点击标题，滚动到对应的主题
+* 在detail中监听标题的点击，获取index
+* 滚动到对应的主题:
+  * 获取所有主题的offsetTop
+  * 问题：在哪里才能获取到正确的offsetTop
+    * 1.created肯定不行，压根不能获取元素
+    * 2.mounted也不行，数据还没有获取到
+    * 3.获取到数据的回调中也不行，DOM还没渲染完
+    * 4.$nextTick也不行，因为图片的高度没有被计算在内
+    * 5.在图片加载完成后，获取的高度才是正确
+#### 14.2.内容滚动,显示正确的标题
+普通做法:
+```vue
+  (this.currentIndex != i &&
+  ((i < length - 1 && positionY >= this.themeTopYs[i] &&
+  positionY < this.themeTopYs[i + 1]) || (i == length - 1 &&
+  positionY >= this.themeTopYs[i])))
+  条件成立:this.currentIndex = 1
+  条件一:防止赋值的过程过于频繁
+  条件二: ((i < length - 1 && positionY >= this.themeTopYs[i] &&
+  positionY < this.themeTopYs[i + 1]) || (i == length - 1 &&
+  positionY >= this.themeTopYs[i]))
+  条件1:(i < length - 1 && positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i + 1])
+  * 判断区间：在0和某个数字之间（i === length -1）
+  条件2:(i == length - 1 &&positionY >= this.themeTopYs[i])
+  * 判断大于等于：i === length - 1
+```
+hack做法：
+```vue
+(this.currentIndex !== i && (positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i + 1]))
+```
+### 十五.顶部工具栏的封装
+
+### 十六.详情页的回到顶部
+* home.vue和detail.vue回到顶部：mixin
+
+### 十七.点击加入购物车
+#### 17.1监听加入购物按钮的点击，并且获取商品信息
+* 监听
+* 获取商品信息:iid/price/image/title/desc
+
+#### 17.2将商品添加到Vuex中
+* 安装Vuex
+* 配置Vuex
+* 定义mutations,将商品添加到state.cartList
+* 重构代码
+ * 将mutations中的代码抽取actions中（定义两个mutations）
+ * 将mutations/actions单独抽取到文件中
+### 十八.购物车的展示
+#### 18.1购物车的导航栏的展示
+
+#### 18.2购物车商品的展示
+* CartList -> Scroll(样式问题)
+* CartListItem -> CheckButton
+
+#### 18.3商品的选中和不选中切换
+* 修改模型对象，改变选中和不选中
+
+#### 18.4底部工具栏的汇总
+* 全选按钮
+* 计算总价格
+* 去计算
+
+### 十九.购物车全选按钮
+* 显示的转态
+ * 判断是否有一个不选中，全选
+* 点击全选按钮
+ * 如果原来都是选中，点击一次，全部不选中
+ * 如果原来都是不选中（某些不选中），全部选中
+
+### 二十.添加购物车弹窗
+#### 20.1Vuex的补充
+* Actions可以返回一个Promise
+* mapActions的映射关系
+
+#### Toast(吐司)封装
+* 普通封装方式
+* 插件封装方式
+
+### 二十一.补充一些细节
+#### 21.1 fastClick减少点击延迟
+* 安装fastclick
+* 导入
+* 调用attach函数
+
+#### 22.2图片的懒加载
+* 什么是图片懒加载
+ * 图片需要显示在屏幕上时再加载图片
+* 使用vue-lazyload
+ * 安装
+ * 导入
+ * Vue-use
+ * 修改img.src -> v-lazy
+#### 22.3px2vw插件使用
+* 按照插件
+* postcss.config.js中配置
